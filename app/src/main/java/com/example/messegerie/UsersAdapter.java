@@ -18,6 +18,14 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
     public interface OnUserClickListener {
         void onUserClick(User user);
     }
+
+    public UsersAdapter(List<User> users) {
+        this.users = users;
+    }
+
+    public void setOnUserClickListener(OnUserClickListener listener) {
+        this.listener = listener;
+    }
     @NonNull
     @Override
     public UserViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {

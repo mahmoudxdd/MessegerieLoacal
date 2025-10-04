@@ -44,9 +44,19 @@ public class ChatActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
+        
+        // Safely get intent extras with null checks
         targetIp = getIntent().getStringExtra("targetIp");
         targetName = getIntent().getStringExtra("targetName");
         myIp = getIntent().getStringExtra("myIp");
+        
+        // Validate required data
+        if (targetIp == null || targetName == null) {
+            Toast.makeText(this, "Error: Missing required chat information", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+        
         MainActivity.setActiveChatActivity(this);
         initializeViews();
         setupListView();
@@ -133,29 +143,39 @@ public class ChatActivity extends AppCompatActivity {
     }
     private void sendMessage() {
         String messageText = etMessage.getText().toString().trim();
-        if (!messageText.isEmpty() && client != null && isConnected) {
-            String time = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
-            String formattedMessage = time + " You: " + messageText;
-            messages.add(formattedMessage);
-            messagesAdapter.notifyDataSetChanged();
-            etMessage.setText("");
-            lvMessages.setSelection(messages.size() - 1);
-            networkExecutor.execute(() -> {
-                try {
-                    client.sendMessage(messageText);
-                   // Log.d(TAG, "Message tebaath " + messageText);
-                } catch (IOException e) {
-                   // Log.e(TAG, "tahcha", e);
-                    handler.post(() -> {
-                        Toast.makeText(ChatActivity.this, "Failed to send message: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        if (messageText.isEmpty()) {
+            Toast.makeText(this, "Please enter a message", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        if (client == null || !isConnected) {
+            Toast.makeText(this, "Not connected to user. Please wait...", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        String time = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
+        String formattedMessage = time + " You: " + messageText;
+        messages.add(formattedMessage);
+        messagesAdapter.notifyDataSetChanged();
+        etMessage.setText("");
+        lvMessages.setSelection(messages.size() - 1);
+        
+        networkExecutor.execute(() -> {
+            try {
+                client.sendMessage(messageText);
+                // Log.d(TAG, "Message sent: " + messageText);
+            } catch (IOException e) {
+                // Log.e(TAG, "Failed to send message", e);
+                handler.post(() -> {
+                    Toast.makeText(ChatActivity.this, "Failed to send message: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    // Remove the message from the list if sending failed
+                    if (messages.contains(formattedMessage)) {
                         messages.remove(formattedMessage);
                         messagesAdapter.notifyDataSetChanged();
-                    });
-                }
-            });
-        } else if (!isConnected) {
-            Toast.makeText(this, "Not connected to user. Please wait...", Toast.LENGTH_SHORT).show();
-        }
+                    }
+                });
+            }
+        });
     }
     public void receiveMessage(String message, String senderIp) {
         //Log.d(TAG, "njeh tebaath" + senderIp + ": " + message);

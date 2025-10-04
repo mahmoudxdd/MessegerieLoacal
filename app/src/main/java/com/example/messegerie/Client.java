@@ -58,10 +58,17 @@ public class Client extends Thread {
         }
     }
     public void sendMessage(String message) throws IOException {
-        if (out != null && running && !socket.isClosed()) {
-            out.println(message);
-            out.flush();
+        if (out == null) {
+            throw new IOException("Output stream is null - connection not established");
         }
+        if (!running) {
+            throw new IOException("Client is not running");
+        }
+        if (socket == null || socket.isClosed()) {
+            throw new IOException("Socket is closed or null");
+        }
+        out.println(message);
+        out.flush();
     }
     public void stopClient() {
         running = false;
@@ -80,6 +87,10 @@ public class Client extends Thread {
         }
     }
     public boolean isConnected() {
-        return running && socket != null && !socket.isClosed() && socket.isConnected();
+        try {
+            return running && socket != null && !socket.isClosed() && socket.isConnected();
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

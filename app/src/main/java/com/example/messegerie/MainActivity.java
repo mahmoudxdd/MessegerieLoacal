@@ -89,9 +89,9 @@ public class MainActivity extends AppCompatActivity {
             String ipAddress = userInfo.substring(userInfo.indexOf("(") + 1, userInfo.indexOf(")"));
             String deviceName = userInfo.substring(0, userInfo.indexOf("(")).trim();
             Intent intent = new Intent(MainActivity.this, ChatActivity.class);
-            intent.putExtra("target_ip", ipAddress);
-            intent.putExtra("target_name", deviceName);
-            intent.putExtra("my_ip", localIp);
+            intent.putExtra("targetIp", ipAddress);
+            intent.putExtra("targetName", deviceName);
+            intent.putExtra("myIp", localIp);
             startActivity(intent);
         } catch (Exception e) {
             Toast.makeText(this, "Error opening chat: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -214,11 +214,8 @@ public class MainActivity extends AppCompatActivity {
                     }
                 } catch (IOException e) {
                     if (!broadcastSocket.isClosed()) {
-                        try {
-                            throw new IOException("error");
-                        } catch (IOException ex) {
-                            throw new RuntimeException(ex);
-                        }
+                        Log.e(TAG, "error" + e.getMessage());
+                        // Don't throw RuntimeException, just continue listening
                     }
                 }
             }
@@ -239,7 +236,6 @@ public class MainActivity extends AppCompatActivity {
                 );
                 socket.send(packet);
                 socket.close();
-                
             } catch (IOException e) {
             } finally {
                 isBroadcasting = false;
